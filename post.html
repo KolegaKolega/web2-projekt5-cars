@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Post new fast car</title>
+    <link rel="manifest" href="/manifest.json">
+</head>
+<body>
+<h1><a href="/">Home</a></h1>
+<h1>New Fast cars!</h1>
+<h2>You can post one too!</h2>
+<form>
+    <div>
+        <label for="name">Name:</label>
+        <input type="text" id="name">
+    </div>
+    <div>
+        <label for="speed">Speed:</label>
+        <input type="text" id="speed">
+    </div>
+    <button type="submit">Post!</button>
+</form>
+<div id="to_put_cars">
+
+</div>
+<script src="/idb.js"></script>
+<script src="/utility.js"></script>
+<script>
+    function fetchCars(){
+        fetch("/cars").then((res) => {
+            if(res.ok){
+                res.json().then((data) =>{
+                    data.cars.forEach((car) =>{
+                        const toPutCarsDiv = document.querySelector('#to_put_cars')
+                        const newDivForCar = document.createElement('div')
+
+                        toPutCarsDiv.appendChild(newDivForCar)
+
+                        const nameDiv = document.createElement('div')
+                        const speedDiv = document.createElement('div')
+
+                        nameDiv.textContent = "Name:" + car.name
+                        speedDiv.textContent = "Speed:" + car.speed
+
+                        newDivForCar.appendChild(nameDiv)
+                        newDivForCar.appendChild(speedDiv)
+
+                        toPutCarsDiv.appendChild(document.createElement('br'))
+                    })
+                })
+            }
+        })
+    }
+</script>
+<script>
+    fetchCars()
+    const nameInput = document.querySelector('#name')
+    const speedInput = document.querySelector('#speed');
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function (event) {
+       event.preventDefault()
+
+        if (nameInput.value.trim() === '' || speedInput.value.trim() === '') {
+            alert('Please enter valid data!');
+        }
+
+        if ('serviceWorker' in navigator && 'SyncManager' in window) {
+            navigator.serviceWorker.ready
+                .then(function(sw) {
+                    const post = {
+                        id: new Date().toISOString(),
+                        name: nameInput.value,
+                        speed: speedInput.value
+                    };
+                    writeData('sync-posts', post)
+                        .then(function() {
+                            return sw.sync.register('sync-new-posts');
+                        })
+                        .catch(function(err) {
+                            console.log(err);
+                        });
+                });
+        }
+        window.location.reload()
+    });
+</script>
+
+</body>
+</html>
